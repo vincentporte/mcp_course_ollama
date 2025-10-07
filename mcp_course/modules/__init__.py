@@ -1,0 +1,1 @@
+"""Course modules package."""
