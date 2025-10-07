@@ -1,7 +1,6 @@
 """Content loading system for course modules and lessons."""
 
 import json
-import yaml
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 import re
@@ -46,10 +45,9 @@ class FileSystemContentLoader(ContentLoader):
     
     def _find_module_file(self, module_dir: Path) -> Optional[Path]:
         """Find module configuration file in directory."""
-        for filename in ['module.json', 'module.yaml', 'module.yml']:
-            module_file = module_dir / filename
-            if module_file.exists():
-                return module_file
+        module_file = module_dir / 'module.json'
+        if module_file.exists():
+            return module_file
         return None
     
     def _get_module_order(self, module_id: str) -> int:
@@ -95,12 +93,9 @@ class FileSystemContentLoader(ContentLoader):
             return None
     
     def _load_config_file(self, file_path: Path) -> Dict[str, Any]:
-        """Load configuration from JSON or YAML file."""
+        """Load configuration from JSON file."""
         with open(file_path, 'r', encoding='utf-8') as f:
-            if file_path.suffix.lower() == '.json':
-                return json.load(f)
-            else:  # YAML
-                return yaml.safe_load(f)
+            return json.load(f)
     
     def _create_module_from_data(self, module_id: str, data: Dict[str, Any], module_dir: Path) -> CourseModule:
         """Create CourseModule from configuration data."""
@@ -139,7 +134,7 @@ class FileSystemContentLoader(ContentLoader):
                 lesson = self._load_lesson_from_dir(item)
                 if lesson:
                     lessons.append(lesson)
-            elif item.suffix.lower() in ['.json', '.yaml', '.yml']:
+            elif item.suffix.lower() == '.json':
                 lesson = self._load_lesson_from_file(item)
                 if lesson:
                     lessons.append(lesson)
@@ -150,12 +145,9 @@ class FileSystemContentLoader(ContentLoader):
     
     def _load_lesson_from_dir(self, lesson_dir: Path) -> Optional[Lesson]:
         """Load lesson from directory structure."""
-        lesson_file = None
-        for filename in ['lesson.json', 'lesson.yaml', 'lesson.yml']:
-            candidate = lesson_dir / filename
-            if candidate.exists():
-                lesson_file = candidate
-                break
+        lesson_file = lesson_dir / 'lesson.json'
+        if not lesson_file.exists():
+            lesson_file = None
         
         if not lesson_file:
             logger.warning(f"No lesson configuration found in: {lesson_dir}")

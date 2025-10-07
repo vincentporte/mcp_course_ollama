@@ -329,7 +329,7 @@ class CourseNavigator:
         total_modules = len(context.available_modules)
         completed_modules = sum(
             1 for module_id in context.available_modules
-            if context.module_progress.get(module_id, {}).completion_status == 'completed'
+            if (progress := context.module_progress.get(module_id)) and progress.completion_status == 'completed'
         )
         
         total_lessons = 0
