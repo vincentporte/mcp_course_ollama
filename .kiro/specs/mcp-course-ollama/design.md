@@ -19,15 +19,15 @@ graph TD
     E --> F[Tools & Resources]
     F --> G[Advanced Patterns]
     G --> H[Final Project]
-    
+
     B --> B1[MCP Architecture]
     B --> B2[Protocol Concepts]
     B --> B3[Component Interactions]
-    
+
     D --> D1[Basic Server]
     D --> D2[Tool Implementation]
     D --> D3[Resource Exposure]
-    
+
     E --> E1[Client Setup]
     E --> E2[Server Communication]
     E --> E3[Error Handling]
@@ -169,7 +169,7 @@ class OllamaConfig:
     endpoint: str = "http://localhost:11434"
     parameters: Dict[str, Any] = None
     privacy_settings: Dict[str, Any] = None
-    
+
     def __post_init__(self):
         if self.parameters is None:
             self.parameters = {

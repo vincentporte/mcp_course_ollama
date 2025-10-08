@@ -1,18 +1,17 @@
 """Logging utilities for the MCP course."""
 
 import logging
-from typing import Optional
 
 
-def get_logger(name: str, level: Optional[int] = None) -> logging.Logger:
+def get_logger(name: str, level: int | None = None) -> logging.Logger:
     """Get a configured logger instance."""
     logger = logging.getLogger(name)
-    
+
     if level is None:
         level = logging.INFO
-    
+
     logger.setLevel(level)
-    
+
     # Only add handler if logger doesn't have one already
     if not logger.handlers:
         handler = logging.StreamHandler()
@@ -21,7 +20,7 @@ def get_logger(name: str, level: Optional[int] = None) -> logging.Logger:
         )
         handler.setFormatter(formatter)
         logger.addHandler(handler)
-    
+
     return logger
 
 
