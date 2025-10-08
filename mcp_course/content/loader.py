@@ -5,8 +5,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any
 import re
 
-from ..models.content import CourseModule, Lesson, Exercise, LearningObjective, ContentLoader
-from ..utils.logging import get_logger
+from mcp_course.models.content import CourseModule, Lesson, Exercise, LearningObjective, ContentLoader
+from mcp_course.utils.logging import get_logger
 
 logger = get_logger(__name__)
 

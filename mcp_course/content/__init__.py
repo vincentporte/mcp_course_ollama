@@ -1,6 +1,6 @@
 """Course content management and loading utilities."""
 
-from .loader import FileSystemContentLoader
-from .navigator import CourseNavigator
+from mcp_course.content.loader import FileSystemContentLoader
+from mcp_course.content.navigator import CourseNavigator
 
 __all__ = ["FileSystemContentLoader", "CourseNavigator"]

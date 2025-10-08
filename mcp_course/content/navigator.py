@@ -3,8 +3,8 @@
 from typing import List, Optional, Dict, Any, Tuple
 from dataclasses import dataclass
 
-from ..models.content import CourseModule, Lesson, ContentLoader
-from ..utils.logging import get_logger
+from mcp_course.models.content import CourseModule, Lesson, ContentLoader
+from mcp_course.utils.logging import get_logger
 
 logger = get_logger(__name__)
 

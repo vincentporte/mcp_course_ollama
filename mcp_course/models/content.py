@@ -6,7 +6,7 @@ from pathlib import Path
 from abc import ABC, abstractmethod
 import json
 
-from ..utils.logging import get_logger
+from mcp_course.utils.logging import get_logger
 
 logger = get_logger(__name__)
 

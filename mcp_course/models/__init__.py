@@ -1,6 +1,6 @@
 """Course data models and structures."""
 
-from .content import CourseModule, Lesson, Exercise, LearningObjective, ContentLoader
+from mcp_course.models.content import CourseModule, Lesson, Exercise, LearningObjective, ContentLoader
 
 __all__ = [
     "CourseModule",
