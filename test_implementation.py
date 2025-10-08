@@ -16,15 +16,9 @@ def test_imports():
     
     try:
         from mcp_course.models import (
-            CourseProgress, ExerciseCompletion, CourseModule, 
-            Lesson, Exercise, LearningObjective, ContentLoader
+            CourseModule, Lesson, Exercise, LearningObjective, ContentLoader
         )
-        from mcp_course.storage import ProgressStore
         from mcp_course.content import FileSystemContentLoader, CourseNavigator
-        from mcp_course.utils.progress_utils import (
-            serialize_progress_to_json, deserialize_progress_from_json,
-            merge_progress_data, calculate_overall_progress
-        )
         print("✅ All imports successful")
         return True
     except ImportError as e:
@@ -32,58 +26,7 @@ def test_imports():
         return False
 
 
-def test_progress_models():
-    """Test progress tracking models."""
-    print("\n🔍 Testing progress models...")
-    
-    try:
-        from mcp_course.models import CourseProgress, ExerciseCompletion
-        
-        # Test ExerciseCompletion
-        exercise = ExerciseCompletion(
-            exercise_id="ex_001",
-            completed=True,
-            code_submission="print('Hello, MCP!')",
-            feedback="Great work!",
-            completion_time=datetime.now(),
-            attempts=2
-        )
-        
-        # Test serialization
-        exercise_dict = exercise.to_dict()
-        exercise_restored = ExerciseCompletion.from_dict(exercise_dict)
-        assert exercise.exercise_id == exercise_restored.exercise_id
-        assert exercise.completed == exercise_restored.completed
-        
-        # Test CourseProgress
-        progress = CourseProgress(
-            user_id="test_user",
-            module_id="module_001",
-            completion_status="in_progress",
-            assessment_score=85,
-            practical_exercises=[exercise]
-        )
-        
-        # Test progress methods
-        progress.add_exercise_completion(exercise)
-        retrieved_exercise = progress.get_exercise_completion("ex_001")
-        assert retrieved_exercise is not None
-        assert retrieved_exercise.completed
-        
-        completion_pct = progress.calculate_completion_percentage()
-        assert completion_pct == 100.0
-        
-        # Test serialization
-        progress_dict = progress.to_dict()
-        progress_restored = CourseProgress.from_dict(progress_dict)
-        assert progress.user_id == progress_restored.user_id
-        assert progress.module_id == progress_restored.module_id
-        
-        print("✅ Progress models working correctly")
-        return True
-    except Exception as e:
-        print(f"❌ Progress models test failed: {e}")
-        return False
+
 
 
 def test_content_models():
@@ -162,87 +105,7 @@ def test_content_models():
         return False
 
 
-def test_progress_store():
-    """Test SQLite progress storage system."""
-    print("\n🔍 Testing progress storage...")
-    
-    try:
-        from mcp_course.storage import ProgressStore
-        from mcp_course.models import CourseProgress, ExerciseCompletion
-        
-        # Create temporary directory for testing
-        with tempfile.TemporaryDirectory() as temp_dir:
-            store = ProgressStore(Path(temp_dir))
-            
-            # Create test progress with exercise
-            exercise = ExerciseCompletion(
-                exercise_id="ex_001",
-                completed=True,
-                code_submission="print('Hello SQLite!')",
-                feedback="Great work!",
-                completion_time=datetime.now(),
-                attempts=1
-            )
-            
-            progress = CourseProgress(
-                user_id="test_user",
-                module_id="module_001",
-                completion_status="completed",
-                assessment_score=90,
-                practical_exercises=[exercise],
-                notes="Test notes",
-                time_spent_minutes=45
-            )
-            
-            # Test save and load
-            store.save_progress(progress)
-            loaded_progress = store.load_progress("test_user", "module_001")
-            
-            assert loaded_progress is not None, "Failed to load saved progress"
-            assert loaded_progress.user_id == "test_user"
-            assert loaded_progress.module_id == "module_001"
-            assert loaded_progress.assessment_score == 90
-            assert loaded_progress.notes == "Test notes"
-            assert loaded_progress.time_spent_minutes == 45
-            assert len(loaded_progress.practical_exercises) == 1
-            
-            # Test exercise data
-            loaded_exercise = loaded_progress.practical_exercises[0]
-            assert loaded_exercise.exercise_id == "ex_001"
-            assert loaded_exercise.completed == True
-            assert loaded_exercise.code_submission == "print('Hello SQLite!')"
-            assert loaded_exercise.feedback == "Great work!"
-            assert loaded_exercise.attempts == 1
-            
-            # Test user progress loading
-            user_progress = store.load_user_progress("test_user")
-            assert "module_001" in user_progress
-            assert len(user_progress) == 1
-            
-            # Test getting all users
-            all_users = store.get_all_users()
-            assert "test_user" in all_users
-            
-            # Test deletion of specific module
-            deleted = store.delete_progress("test_user", "module_001")
-            assert deleted
-            
-            # Verify deletion
-            deleted_progress = store.load_progress("test_user", "module_001")
-            assert deleted_progress is None
-            
-            # Test backup functionality
-            backup_file = store.create_backup()
-            assert backup_file is not None
-            assert backup_file.exists()
-        
-        print("✅ Progress storage working correctly")
-        return True
-    except Exception as e:
-        print(f"❌ Progress storage test failed: {e}")
-        import traceback
-        traceback.print_exc()
-        return False
+
 
 
 def test_content_loader():
@@ -341,7 +204,6 @@ def test_navigation():
     
     try:
         from mcp_course.content import CourseNavigator
-        from mcp_course.models import CourseProgress, ExerciseCompletion
         
         # Create mock content loader
         class MockContentLoader:
@@ -381,18 +243,7 @@ def test_navigation():
         navigator = CourseNavigator(MockContentLoader())
         
         # Test navigation context
-        user_progress = {
-            "module_001": CourseProgress(
-                user_id="test_user",
-                module_id="module_001",
-                completion_status="in_progress",
-                practical_exercises=[
-                    ExerciseCompletion(exercise_id="ex_001", completed=False)
-                ]
-            )
-        }
-        
-        context = navigator.get_navigation_context(user_progress)
+        context = navigator.get_navigation_context()
         assert context.current_module_id == "module_001"
         assert context.current_lesson_id == "lesson_001"
         
@@ -401,10 +252,10 @@ def test_navigation():
         assert next_result.success
         assert next_result.target_lesson_id == "lesson_002"
         
-        # Test progress summary
-        summary = navigator.get_progress_summary(context)
+        # Test course summary
+        summary = navigator.get_course_summary(context)
         assert summary["total_modules"] == 2
-        assert summary["completed_modules"] == 0
+        assert summary["total_lessons"] == 3
         
         print("✅ Navigation system working correctly")
         return True
@@ -413,75 +264,7 @@ def test_navigation():
         return False
 
 
-def test_progress_utilities():
-    """Test progress utility functions."""
-    print("\n🔍 Testing progress utilities...")
-    
-    try:
-        from mcp_course.utils.progress_utils import (
-            serialize_progress_to_json, deserialize_progress_from_json,
-            merge_progress_data, calculate_overall_progress
-        )
-        from mcp_course.models import CourseProgress, ExerciseCompletion
-        
-        # Create test progress
-        exercise = ExerciseCompletion(
-            exercise_id="ex_001",
-            completed=True,
-            code_submission="test code"
-        )
-        
-        progress = CourseProgress(
-            user_id="test_user",
-            module_id="module_001",
-            completion_status="completed",
-            assessment_score=95,
-            practical_exercises=[exercise]
-        )
-        
-        # Test serialization
-        json_str = serialize_progress_to_json(progress)
-        assert isinstance(json_str, str)
-        assert "test_user" in json_str
-        
-        # Test deserialization
-        restored_progress = deserialize_progress_from_json(json_str)
-        assert restored_progress.user_id == "test_user"
-        assert restored_progress.assessment_score == 95
-        
-        # Test merging
-        progress2 = CourseProgress(
-            user_id="test_user",
-            module_id="module_001",
-            completion_status="completed",
-            assessment_score=90,
-            time_spent_minutes=120
-        )
-        
-        merged = merge_progress_data(progress, progress2)
-        assert merged.user_id == "test_user"
-        assert merged.assessment_score in [90, 95]  # One of the two
-        
-        # Test overall progress calculation
-        user_progress = {
-            "module_001": progress,
-            "module_002": CourseProgress(
-                user_id="test_user",
-                module_id="module_002",
-                completion_status="in_progress"
-            )
-        }
-        
-        overall = calculate_overall_progress(user_progress)
-        assert overall["total_modules"] == 2
-        assert overall["completed_modules"] == 1
-        assert overall["overall_completion_percentage"] == 50.0
-        
-        print("✅ Progress utilities working correctly")
-        return True
-    except Exception as e:
-        print(f"❌ Progress utilities test failed: {e}")
-        return False
+
 
 
 def main():
@@ -491,12 +274,9 @@ def main():
     
     tests = [
         test_imports,
-        test_progress_models,
         test_content_models,
-        test_progress_store,
         test_content_loader,
-        test_navigation,
-        test_progress_utilities
+        test_navigation
     ]
     
     passed = 0

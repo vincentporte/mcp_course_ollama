@@ -4,7 +4,6 @@ from typing import List, Optional, Dict, Any, Tuple
 from dataclasses import dataclass
 
 from ..models.content import CourseModule, Lesson, ContentLoader
-from ..models.progress import CourseProgress
 from ..utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -17,13 +16,10 @@ class NavigationContext:
     current_module_id: Optional[str] = None
     current_lesson_id: Optional[str] = None
     available_modules: List[str] = None
-    module_progress: Dict[str, CourseProgress] = None
     
     def __post_init__(self):
         if self.available_modules is None:
             self.available_modules = []
-        if self.module_progress is None:
-            self.module_progress = {}
 
 
 @dataclass
@@ -49,62 +45,25 @@ class CourseNavigator:
         self.content_loader = content_loader
         logger.info("Initialized course navigator")
     
-    def get_navigation_context(self, user_progress: Dict[str, CourseProgress]) -> NavigationContext:
-        """Get current navigation context for a user."""
+    def get_navigation_context(self) -> NavigationContext:
+        """Get current navigation context."""
         available_modules = self.content_loader.get_available_modules()
         
-        # Find current position based on progress
+        # Start with first module and first lesson if available
         current_module_id = None
         current_lesson_id = None
         
-        # Look for the first incomplete module
-        for module_id in available_modules:
-            progress = user_progress.get(module_id)
-            if not progress or progress.completion_status != 'completed':
-                current_module_id = module_id
-                
-                # Find current lesson within module
-                module = self.content_loader.load_module(module_id)
-                if module and progress:
-                    current_lesson_id = self._find_current_lesson(module, progress)
-                elif module:
-                    # Start with first lesson if no progress
-                    if module.lessons:
-                        current_lesson_id = module.lessons[0].id
-                break
+        if available_modules:
+            current_module_id = available_modules[0]
+            module = self.content_loader.load_module(current_module_id)
+            if module and module.lessons:
+                current_lesson_id = module.lessons[0].id
         
         return NavigationContext(
             current_module_id=current_module_id,
             current_lesson_id=current_lesson_id,
-            available_modules=available_modules,
-            module_progress=user_progress
+            available_modules=available_modules
         )
-    
-    def _find_current_lesson(self, module: CourseModule, progress: CourseProgress) -> Optional[str]:
-        """Find the current lesson based on progress."""
-        if not module.lessons:
-            return None
-        
-        # Find first incomplete lesson
-        for lesson in sorted(module.lessons, key=lambda l: l.order):
-            lesson_exercises = [ex for ex in progress.practical_exercises 
-                             if any(lesson_ex.id == ex.exercise_id for lesson_ex in lesson.exercises)]
-            
-            # If lesson has exercises and not all are completed
-            if lesson.exercises:
-                completed_exercises = [ex for ex in lesson_exercises if ex.completed]
-                if len(completed_exercises) < len(lesson.exercises):
-                    return lesson.id
-            else:
-                # For lessons without exercises, check if module is in progress
-                if progress.completion_status == 'in_progress':
-                    return lesson.id
-        
-        # If all lessons seem complete but module isn't, return last lesson
-        if progress.completion_status != 'completed' and module.lessons:
-            return module.lessons[-1].id
-        
-        return None
     
     def navigate_to_next_lesson(self, context: NavigationContext) -> NavigationResult:
         """Navigate to the next lesson in sequence."""
@@ -125,17 +84,6 @@ class CourseNavigator:
             # Try to get next lesson in current module
             next_lesson = module.get_next_lesson(context.current_lesson_id)
             if next_lesson:
-                # Check prerequisites
-                missing_prereqs = self._check_lesson_prerequisites(
-                    next_lesson, context.module_progress
-                )
-                if missing_prereqs:
-                    return NavigationResult(
-                        success=False,
-                        message="Prerequisites not met for next lesson",
-                        prerequisites_missing=missing_prereqs
-                    )
-                
                 return NavigationResult(
                     success=True,
                     target_module_id=context.current_module_id,
@@ -189,17 +137,6 @@ class CourseNavigator:
                     return NavigationResult(
                         success=False,
                         message=f"Could not load next module: {next_module_id}"
-                    )
-                
-                # Check module prerequisites
-                missing_prereqs = self._check_module_prerequisites(
-                    next_module, context.module_progress
-                )
-                if missing_prereqs:
-                    return NavigationResult(
-                        success=False,
-                        message="Prerequisites not met for next module",
-                        prerequisites_missing=missing_prereqs
                     )
                 
                 # Get first lesson
@@ -273,45 +210,6 @@ class CourseNavigator:
                 message="Current module not found in available modules"
             )
     
-    def _check_module_prerequisites(self, module: CourseModule, user_progress: Dict[str, CourseProgress]) -> List[str]:
-        """Check if module prerequisites are met."""
-        missing_prereqs = []
-        
-        for prereq_module_id in module.prerequisites:
-            progress = user_progress.get(prereq_module_id)
-            if not progress or progress.completion_status != 'completed':
-                missing_prereqs.append(prereq_module_id)
-        
-        return missing_prereqs
-    
-    def _check_lesson_prerequisites(self, lesson: Lesson, user_progress: Dict[str, CourseProgress]) -> List[str]:
-        """Check if lesson prerequisites are met."""
-        missing_prereqs = []
-        
-        for prereq_lesson_id in lesson.prerequisites:
-            # Prerequisites can be lesson IDs or module IDs
-            found = False
-            
-            # Check if it's a module prerequisite
-            if prereq_lesson_id in user_progress:
-                progress = user_progress[prereq_lesson_id]
-                if progress.completion_status == 'completed':
-                    found = True
-            else:
-                # Check if it's a lesson within any module
-                for module_id, progress in user_progress.items():
-                    for exercise in progress.practical_exercises:
-                        if exercise.exercise_id.startswith(prereq_lesson_id) and exercise.completed:
-                            found = True
-                            break
-                    if found:
-                        break
-            
-            if not found:
-                missing_prereqs.append(prereq_lesson_id)
-        
-        return missing_prereqs
-    
     def get_learning_path(self, context: NavigationContext) -> List[Tuple[str, str]]:
         """Get the complete learning path as (module_id, lesson_id) tuples."""
         path = []
@@ -324,45 +222,20 @@ class CourseNavigator:
         
         return path
     
-    def get_progress_summary(self, context: NavigationContext) -> Dict[str, Any]:
-        """Get a summary of learning progress."""
+    def get_course_summary(self, context: NavigationContext) -> Dict[str, Any]:
+        """Get a summary of the course structure."""
         total_modules = len(context.available_modules)
-        completed_modules = sum(
-            1 for module_id in context.available_modules
-            if (progress := context.module_progress.get(module_id)) and progress.completion_status == 'completed'
-        )
-        
         total_lessons = 0
-        completed_lessons = 0
         
         for module_id in context.available_modules:
             module = self.content_loader.load_module(module_id)
             if module:
                 total_lessons += len(module.lessons)
-                
-                progress = context.module_progress.get(module_id)
-                if progress:
-                    # Count completed lessons based on exercise completion
-                    for lesson in module.lessons:
-                        lesson_exercises = [ex.id for ex in lesson.exercises]
-                        if lesson_exercises:
-                            completed_exercises = [
-                                ex for ex in progress.practical_exercises
-                                if ex.exercise_id in lesson_exercises and ex.completed
-                            ]
-                            if len(completed_exercises) == len(lesson_exercises):
-                                completed_lessons += 1
-                        elif progress.completion_status == 'completed':
-                            # Lesson without exercises in completed module
-                            completed_lessons += 1
         
         return {
             "total_modules": total_modules,
-            "completed_modules": completed_modules,
-            "module_completion_percentage": (completed_modules / total_modules) * 100 if total_modules > 0 else 0,
             "total_lessons": total_lessons,
-            "completed_lessons": completed_lessons,
-            "lesson_completion_percentage": (completed_lessons / total_lessons) * 100 if total_lessons > 0 else 0,
             "current_module": context.current_module_id,
-            "current_lesson": context.current_lesson_id
+            "current_lesson": context.current_lesson_id,
+            "available_modules": context.available_modules
         }
