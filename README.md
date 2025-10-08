@@ -57,6 +57,20 @@ Configure Ollama settings:
 uv run mcp-course config --model llama3.2:3b --temperature 0.7
 ```
 
+Demo ollama_client script, run the comprehensive demo to see all features:
+```bash
+python mcp_course/examples/ollama_integration_demo.py
+```
+
+Run the complete fundamentals course:
+```bash
+import asyncio
+from mcp_course.fundamentals.main import run_complete_fundamentals_course
+
+# Run the complete course
+asyncio.run(run_complete_fundamentals_course())
+```
+
 ## Course Structure
 
 1. **MCP Fundamentals** - Core concepts and architecture
@@ -85,21 +99,6 @@ uv run ruff format .
 # Lint code
 uv run ruff check .
 ```
-
-### Project Structure
-
-```
-mcp_course/
-├── modules/          # Course modules and lessons
-├── examples/         # Code examples and templates
-├── utils/           # Utility functions and helpers
-├── config/          # Configuration management
-└── cli.py           # Command-line interface
-```
-
-## Contributing
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
 ## License
 
