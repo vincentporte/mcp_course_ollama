@@ -79,19 +79,6 @@
     - Build conversation management with MCP tool integration
     - _Requirements: 2.2, 2.3, 3.2_
 
-- [ ] 7. Develop interactive learning environment
-  - [ ] 7.1 Create code execution and validation system
-    - Build sandboxed Python code execution environment
-    - Implement code validation and testing utilities
-    - Create interactive code editing and execution interface
-    - _Requirements: 3.1, 3.3, 5.1_
-
-  - [ ] 7.2 Build assessment and feedback system
-    - Implement knowledge check quizzes and coding exercises
-    - Create automated code assessment and feedback generation
-    - Build progress tracking and achievement system
-    - _Requirements: 5.1, 5.2, 5.3_
-
 - [ ] 8. Implement advanced MCP patterns and examples
   - [ ] 8.1 Create multi-server orchestration examples
     - Build examples showing multiple MCP Servers working together
@@ -136,3 +123,17 @@
     - Write integration tests for Ollama-MCP interactions
     - Build performance tests for course platform components
     - _Requirements: All requirements validation_
+
+
+- [ ]* 7. Develop interactive learning environment
+  - [ ]* 7.1 Create code execution and validation system
+    - Build sandboxed Python code execution environment
+    - Implement code validation and testing utilities
+    - Create interactive code editing and execution interface
+    - _Requirements: 3.1, 3.3, 5.1_
+
+  - [ ]* 7.2 Build assessment and feedback system
+    - Implement knowledge check quizzes and coding exercises
+    - Create automated code assessment and feedback generation
+    - Build progress tracking and achievement system
+    - _Requirements: 5.1, 5.2, 5.3_
