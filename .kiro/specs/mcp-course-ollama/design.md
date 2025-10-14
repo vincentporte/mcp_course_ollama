@@ -98,7 +98,7 @@ graph TD
 
 #### Interactive Learning Environment
 - **Platform**: Web-based interface with embedded code execution
-- **Features**: 
+- **Features**:
   - Live code editing and execution
   - Ollama integration for real-time LLM interaction
   - Progress tracking and assessment tools

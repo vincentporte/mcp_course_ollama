@@ -52,10 +52,13 @@ Start the course:
 uv run mcp-course info
 ```
 
+DO NOT EXISTS
 Configure Ollama settings:
 ```bash
 uv run mcp-course config --model llama3.2:3b --temperature 0.7
 ```
+END OF DO NOT EXISTS
+
 
 Demo ollama_client script, run the comprehensive demo to see all features:
 ```bash
