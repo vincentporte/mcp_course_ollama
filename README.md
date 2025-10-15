@@ -1,3 +1,5 @@
+> Disclaimer: This code was co-generated using kiro.dev, and is intended to be tested as part of creating this course.
+
 # MCP Course with Ollama
 
 A comprehensive, hands-on educational platform for learning Model Context Protocol (MCP) with local LLM deployment using Ollama.
