@@ -262,7 +262,7 @@ class TestPromptEngineering:
 
         # Should be valid JSON
         parsed = json.loads(tool_list)
-        assert len(parsed) == 2 # noqa
+        assert len(parsed) == 2
         assert parsed[0]["name"] == "calculator"
 
     def test_generate_prompt_direct_tool(self, prompt_eng, sample_tools):
@@ -425,15 +425,15 @@ class TestConversationManager:
 
         # List all conversations
         all_convs = conv_manager.list_conversations()
-        assert len(all_convs) == 3 # noqa
+        assert len(all_convs) == 3
 
         # List with tag filter
         tagged_convs = conv_manager.list_conversations(tag="batch_0")
-        assert len(tagged_convs) == 2 # noqa
+        assert len(tagged_convs) == 2
 
         # List with limit
         limited_convs = conv_manager.list_conversations(limit=2)
-        assert len(limited_convs) == 2 # noqa
+        assert len(limited_convs) == 2
 
     def test_delete_conversation(self, conv_manager):
         """Test deleting conversations."""
@@ -460,7 +460,7 @@ class TestConversationManager:
 
         # Search by title
         results = conv_manager.search_conversations("Data", search_content=False)
-        assert len(results) == 2 # noqa
+        assert len(results) == 2
 
         # Search by tag (should be found in title search too)
         weather_results = conv_manager.search_conversations("weather", search_content=False)
@@ -489,7 +489,7 @@ class TestConversationManager:
         assert summary["title"] == "Summary Test"
         assert "summary" in summary["tags"]
         assert "calculator" in summary["tools_used"]
-        assert len(summary["recent_messages"]) == 2 # noqa
+        assert len(summary["recent_messages"]) == 2
 
 
 class TestIntegrationScenarios:

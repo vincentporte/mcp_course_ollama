@@ -334,7 +334,7 @@ async def demonstrate_server():
     for uri in test_uris:
         try:
             content = await server.resource_registry.get_resource_content(uri)
-            preview = content.text[:200] + "..." if len(content.text) > 200 else content.text # noqa
+            preview = content.text[:200] + "..." if len(content.text) > 200 else content.text
             print(f"✅ {uri}:")
             print(f"   {preview}")
             print()
@@ -378,7 +378,7 @@ async def demonstrate_resource_discovery():
         for resource in python_files[:5]:  # Show first 5
             print(f"   - {resource.name} ({resource.uri})")
 
-        if len(python_files) > 5: # noqa
+        if len(python_files) > 5:
             print(f"   ... and {len(python_files) - 5} more")
 
     except Exception as e:

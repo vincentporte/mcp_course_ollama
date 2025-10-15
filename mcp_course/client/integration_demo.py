@@ -199,7 +199,7 @@ async def demonstrate_prompt_engineering():
             tools=example_tools
         )
         # Show first 200 characters
-        preview = prompt[:200] + "..." if len(prompt) > 200 else prompt # noqa
+        preview = prompt[:200] + "..." if len(prompt) > 200 else prompt
         print(preview)
 
     # 2. Template suggestions

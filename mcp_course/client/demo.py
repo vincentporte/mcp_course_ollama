@@ -129,7 +129,7 @@ async def demonstrate_complete_mcp_client_framework():
             tools=[]  # Would be real tools in practice
         )
         print(f"\n--- {template_name.upper()} TEMPLATE ---")
-        print(prompt[:200] + "..." if len(prompt) > 200 else prompt) # noqa
+        print(prompt[:200] + "..." if len(prompt) > 200 else prompt)
 
     # 7. Simulated Conversation Flow
     print("\n7. Simulating conversation flow...")

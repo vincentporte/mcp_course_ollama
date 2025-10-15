@@ -52,7 +52,7 @@ def generate_server_template(output_path: str = "my_mcp_server.py") -> None:
     print("-" * 50)
     for i, line in enumerate(lines[:20], 1):
         print(f"{i:2d}: {line}")
-    if len(lines) > 20: # noqa
+    if len(lines) > 20:
         print(f"... ({len(lines) - 20} more lines)")
     print("-" * 50)
 

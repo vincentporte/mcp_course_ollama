@@ -254,7 +254,7 @@ async with stdio_server() as (read_stream, write_stream):
                 return "URI required for content action"
             try:
                 content = await self.resource_registry.get_resource_content(uri)
-                preview = content.text[:500] + "..." if len(content.text) > 500 else content.text # noqa
+                preview = content.text[:500] + "..." if len(content.text) > 500 else content.text
                 return f"Resource Content ({uri}):\n\n{preview}"
             except Exception as e:
                 return f"Error getting resource content: {e}"
