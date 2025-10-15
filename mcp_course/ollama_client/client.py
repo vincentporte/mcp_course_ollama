@@ -365,6 +365,54 @@ class OllamaClient:
         """Async context manager entry."""
         return self
 
+    async def chat(
+        self,
+        model: str | None = None,
+        messages: list[dict[str, Any]] | None = None,
+        functions: list[dict[str, Any]] | None = None,
+        stream: bool = False,
+        **kwargs
+    ) -> dict[str, Any]:
+        """
+        Chat with the model using conversation format.
+
+        Args:
+            model: Model name to use
+            messages: List of conversation messages
+            functions: Available functions for tool calling
+            stream: Whether to stream the response
+            **kwargs: Additional parameters
+
+        Returns:
+            Chat response dictionary
+        """
+        target_model = model or self.config.model_name
+
+        try:
+            # Merge parameters with config defaults
+            params = {**self.config.parameters, **kwargs}
+
+            # Prepare the chat request
+            chat_request = {
+                "model": target_model,
+                "messages": messages or [],
+                "stream": stream,
+                "options": params
+            }
+
+            # Add functions if provided (for tool calling)
+            if functions:
+                chat_request["tools"] = functions
+
+            response = await self.async_client.chat(**chat_request)
+
+            return response
+
+        except httpx.ConnectError as e:
+            raise OllamaConnectionError(f"Failed to connect to Ollama server: {e}") from e
+        except Exception as e:
+            raise OllamaModelError(f"Chat request failed: {e}") from e
+
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Async context manager exit."""
         self.close()
