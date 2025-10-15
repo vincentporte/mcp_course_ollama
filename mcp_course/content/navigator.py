@@ -16,7 +16,7 @@ class NavigationContext:
 
     current_module_id: str | None = None
     current_lesson_id: str | None = None
-    available_modules: list[str] = None
+    available_modules: list[str] | None = None
 
     def __post_init__(self):
         if self.available_modules is None:
@@ -31,7 +31,7 @@ class NavigationResult:
     target_module_id: str | None = None
     target_lesson_id: str | None = None
     message: str | None = None
-    prerequisites_missing: list[str] = None
+    prerequisites_missing: list[str] | None = None
 
     def __post_init__(self):
         if self.prerequisites_missing is None:
