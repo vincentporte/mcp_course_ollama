@@ -404,7 +404,7 @@ Approach:
         """
         if not steps:
             # Auto-generate steps based on tools and message
-            steps = self._generate_steps_from_context(user_message, tools)
+            steps = self._generate_steps_from_context(user_message)
 
         tool_list = self.generate_tool_list(tools, "detailed")
 
@@ -417,7 +417,7 @@ User request: {user_message}
 
 Recommended approach:
 """
-        
+
         for i, step in enumerate(steps, 1):
             prompt += f"{i}. {step}\n"
 
@@ -429,7 +429,6 @@ Execute each step carefully, using the appropriate tools. Provide clear feedback
     def _generate_steps_from_context(
         self,
         user_message: str,
-        tools: list[MCPToolDefinition]
     ) -> list[str]:
         """Generate steps based on user message and available tools."""
         message_lower = user_message.lower()
@@ -438,16 +437,16 @@ Execute each step carefully, using the appropriate tools. Provide clear feedback
         # Analyze message for common patterns
         if "analyze" in message_lower or "data" in message_lower:
             steps.append("Gather and examine the relevant data")
-            
+
         if "calculate" in message_lower or "compute" in message_lower:
             steps.append("Perform necessary calculations")
-            
+
         if "search" in message_lower or "find" in message_lower:
             steps.append("Search for the requested information")
-            
+
         if "send" in message_lower or "email" in message_lower or "notify" in message_lower:
             steps.append("Send notifications or communications")
-            
+
         if "report" in message_lower or "summary" in message_lower:
             steps.append("Generate a comprehensive report or summary")
 
@@ -612,18 +611,18 @@ Proceed with the best alternative strategy."""
 
         # Generate recommendations
         recommendations = []
-        
+
         if analysis["tool_usage_rate"] < 0.5:
             recommendations.append("Consider making tool usage instructions more explicit")
-            
+
         if analysis["clarity_score"] < 0.7:
             recommendations.append("Improve prompt clarity and structure")
-            
+
         if analysis["specificity_score"] < 0.6:
             recommendations.append("Add more specific instructions and examples")
 
         analysis["recommendations"] = recommendations
-        
+
         return analysis
 
     def _count_tool_mentions(self, prompt: str) -> int:
@@ -631,11 +630,11 @@ Proceed with the best alternative strategy."""
         # Simple heuristic: count lines that look like tool descriptions
         lines = prompt.split('\n')
         tool_mentions = 0
-        
+
         for line in lines:
             if line.strip().startswith('-') and ':' in line:
                 tool_mentions += 1
-                
+
         return tool_mentions
 
     def _assess_prompt_clarity(self, prompt: str) -> float:
@@ -647,7 +646,7 @@ Proceed with the best alternative strategy."""
             len(prompt.split('\n')) > 3,  # Multi-line structure
             "request" in prompt.lower() or "task" in prompt.lower()
         ]
-        
+
         return sum(clarity_indicators) / len(clarity_indicators)
 
     def _assess_prompt_specificity(self, prompt: str) -> float:
@@ -659,7 +658,7 @@ Proceed with the best alternative strategy."""
             len([word for word in prompt.split() if word.isupper()]) > 0,  # Emphasis
             prompt.count('*') > 0 or prompt.count('**') > 0  # Markdown formatting
         ]
-        
+
         return sum(specificity_indicators) / len(specificity_indicators)
 
     def get_template_suggestions(
@@ -695,7 +694,7 @@ Proceed with the best alternative strategy."""
             suggestions.append("conversational")
 
         # If many tools available, prefer structured approaches
-        if available_tools and len(available_tools) > 3: # noqa
+        if available_tools and len(available_tools) > 3:
             if "conversational" in suggestions:
                 suggestions.remove("conversational")
             if "step_by_step" not in suggestions:

@@ -203,11 +203,11 @@ class OllamaMCPBridge:
         try:
             # Prepare messages for Ollama
             messages = []
-            
+
             # Add system prompt if provided
             if system_prompt:
                 messages.append({"role": "system", "content": system_prompt})
-            
+
             # Add conversation messages
             for msg in context.messages:
                 messages.append({"role": msg["role"], "content": msg["content"]})
@@ -227,8 +227,8 @@ class OllamaMCPBridge:
 
             if stream:
                 # Handle streaming response
-                return await self._handle_streaming_response(response, context, max_tool_calls)
-            
+                return await self._handle_streaming_response(response, context)
+
             assistant_message = response.get("message", {})
 
             # Handle function calls if present
@@ -280,7 +280,7 @@ class OllamaMCPBridge:
                     messages = []
                     if system_prompt:
                         messages.append({"role": "system", "content": system_prompt})
-                    
+
                     for msg in context.messages:
                         messages.append({"role": msg["role"], "content": msg["content"]})
 
@@ -372,14 +372,13 @@ You can use these tools to help answer the user's request. Call the appropriate 
         function_capable_models = [
             "llama3.1", "llama3.2", "mistral", "codellama", "qwen", "gemma"
         ]
-        
+
         return any(model_type in model_name.lower() for model_type in function_capable_models)
 
     async def _handle_streaming_response(
         self,
         response_stream,
         context: ConversationContext,
-        max_tool_calls: int
     ) -> dict[str, Any]:
         """
         Handle streaming response from Ollama.
@@ -400,7 +399,7 @@ You can use these tools to help answer the user's request. Call the appropriate 
                 if chunk.get("message", {}).get("content"):
                     content = chunk["message"]["content"]
                     full_response += content
-                    
+
                 # Handle tool calls in streaming mode if present
                 if chunk.get("message", {}).get("tool_calls"):
                     # For streaming, we'd need to handle tool calls as they come
@@ -449,27 +448,27 @@ You can use these tools to help answer the user's request. Call the appropriate 
             List of tool results
         """
         results = []
-        
+
         for request in tool_requests:
             tool_name = request.get("name")
             arguments = request.get("arguments", {})
-            
+
             if not tool_name:
                 results.append({
                     "error": "Missing tool name",
                     "success": False
                 })
                 continue
-                
+
             result = await self.call_mcp_tool(tool_name, arguments)
-            
+
             if result:
                 # Extract text content
                 result_text = ""
                 for content in result.content:
                     if isinstance(content, TextContent):
                         result_text += content.text
-                        
+
                 results.append({
                     "tool_name": tool_name,
                     "result": result_text,
@@ -481,7 +480,7 @@ You can use these tools to help answer the user's request. Call the appropriate 
                     "error": "Tool execution failed",
                     "success": False
                 })
-                
+
         return results
 
     def get_tool_usage_stats(self) -> dict[str, Any]:
@@ -514,27 +513,27 @@ You can use these tools to help answer the user's request. Call the appropriate 
             "web": [],
             "other": []
         }
-        
+
         for tool in self.available_tools.values():
             name_lower = tool.name.lower()
             desc_lower = tool.description.lower()
-            
-            if any(keyword in name_lower or keyword in desc_lower 
+
+            if any(keyword in name_lower or keyword in desc_lower
                    for keyword in ["data", "database", "query", "analyze"]):
                 categories["data"].append(tool.name)
-            elif any(keyword in name_lower or keyword in desc_lower 
+            elif any(keyword in name_lower or keyword in desc_lower
                      for keyword in ["email", "send", "notify", "message"]):
                 categories["communication"].append(tool.name)
-            elif any(keyword in name_lower or keyword in desc_lower 
+            elif any(keyword in name_lower or keyword in desc_lower
                      for keyword in ["file", "directory", "path", "search"]):
                 categories["file_system"].append(tool.name)
-            elif any(keyword in name_lower or keyword in desc_lower 
+            elif any(keyword in name_lower or keyword in desc_lower
                      for keyword in ["calc", "math", "compute", "calculate"]):
                 categories["calculation"].append(tool.name)
-            elif any(keyword in name_lower or keyword in desc_lower 
+            elif any(keyword in name_lower or keyword in desc_lower
                      for keyword in ["web", "http", "url", "api"]):
                 categories["web"].append(tool.name)
             else:
                 categories["other"].append(tool.name)
-                
+
         return categories

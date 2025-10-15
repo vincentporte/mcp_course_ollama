@@ -9,6 +9,7 @@ from typing import Any
 import uuid
 
 from mcp_course.client.integration import ConversationContext, OllamaMCPBridge
+from mcp_course.client.prompts import PromptEngineering
 
 
 @dataclass
@@ -293,8 +294,8 @@ class ConversationManager:
         Returns:
             Response dictionary with conversation results
         """
-        from mcp_course.client.prompts import PromptEngineering
-        
+
+
         # Load conversation context
         context = self.load_conversation(conv_id)
         if not context:
@@ -303,10 +304,10 @@ class ConversationManager:
         try:
             # Create prompt engineering instance
             prompt_eng = PromptEngineering()
-            
+
             # Get available tools from bridge
             available_tools = list(self.bridge.available_tools.values())
-            
+
             # Generate enhanced prompt
             enhanced_message = prompt_eng.generate_prompt(
                 template_name=template_name,
@@ -340,7 +341,7 @@ class ConversationManager:
         context = self.active_conversations.get(conv_id)
         if not context:
             context = self.load_conversation(conv_id)
-            
+
         if not context:
             return None
 
@@ -370,17 +371,16 @@ class ConversationManager:
         """Calculate conversation duration."""
         if not context.messages or len(context.messages) < 2:
             return "0 minutes"
-            
+
         try:
             first_msg = context.messages[0]
             last_msg = context.messages[-1]
-            
+
             if "timestamp" in first_msg and "timestamp" in last_msg:
-                from datetime import datetime
                 start_time = datetime.fromisoformat(first_msg["timestamp"])
                 end_time = datetime.fromisoformat(last_msg["timestamp"])
                 duration = end_time - start_time
-                
+
                 minutes = duration.total_seconds() / 60
                 if minutes < 1:
                     return "< 1 minute"
@@ -392,13 +392,13 @@ class ConversationManager:
                     return f"{hours}h {remaining_minutes}m"
         except Exception:
             pass
-            
+
         return "Unknown"
 
     def _calculate_tool_frequency(self, context: ConversationContext) -> dict[str, int]:
         """Calculate how frequently each tool was used."""
         tool_frequency = {}
-        
+
         for msg in context.messages:
             if msg["role"] == "tool":
                 try:
@@ -410,7 +410,7 @@ class ConversationManager:
                                 tool_frequency[tool_name] = tool_frequency.get(tool_name, 0) + 1
                 except (json.JSONDecodeError, KeyError):
                     pass
-                    
+
         return tool_frequency
 
     def export_conversation(
@@ -432,7 +432,7 @@ class ConversationManager:
         """
         context = self.load_conversation(conv_id)
         metadata = self.conversation_metadata.get(conv_id)
-        
+
         if not context:
             return None
 
@@ -443,7 +443,7 @@ class ConversationManager:
                     "messages": context.messages,
                     "tool_results": context.tool_results
                 }
-                
+
                 if include_metadata and metadata:
                     export_data["metadata"] = {
                         "title": metadata.title,
@@ -451,59 +451,59 @@ class ConversationManager:
                         "updated_at": metadata.updated_at.isoformat(),
                         "tags": metadata.tags
                     }
-                    
+
                 return json.dumps(export_data, indent=2)
-                
+
             elif format_type == "markdown":
                 lines = []
-                
+
                 if include_metadata and metadata:
                     lines.append(f"# {metadata.title}")
                     lines.append(f"**Created:** {metadata.created_at}")
                     lines.append(f"**Tags:** {', '.join(metadata.tags)}")
                     lines.append("")
-                
+
                 for msg in context.messages:
                     role = msg["role"].title()
                     content = msg["content"]
                     timestamp = msg.get("timestamp", "")
-                    
+
                     lines.append(f"## {role}")
                     if timestamp:
                         lines.append(f"*{timestamp}*")
                     lines.append("")
                     lines.append(content)
                     lines.append("")
-                    
+
                 return "\n".join(lines)
-                
+
             elif format_type == "txt":
                 lines = []
-                
+
                 if include_metadata and metadata:
                     lines.append(f"Conversation: {metadata.title}")
                     lines.append(f"Created: {metadata.created_at}")
                     lines.append("-" * 50)
                     lines.append("")
-                
+
                 for msg in context.messages:
                     role = msg["role"].upper()
                     content = msg["content"]
                     timestamp = msg.get("timestamp", "")
-                    
+
                     header = f"[{role}]"
                     if timestamp:
                         header += f" {timestamp}"
-                    
+
                     lines.append(header)
                     lines.append(content)
                     lines.append("")
-                    
+
                 return "\n".join(lines)
-                
+
         except Exception as e:
             self.logger.error(f"Error exporting conversation {conv_id}: {e}")
-            
+
         return None
 
     def list_conversations(
@@ -604,7 +604,7 @@ class ConversationManager:
             summary["recent_messages"] = [
                 {
                     "role": msg["role"],
-                    "content": msg["content"][:100] + "..." if len(msg["content"]) > 100 else msg["content"], # noqa
+                    "content": msg["content"][:100] + "..." if len(msg["content"]) > 100 else msg["content"],
                     "timestamp": msg.get("timestamp", "")
                 }
                 for msg in recent_messages

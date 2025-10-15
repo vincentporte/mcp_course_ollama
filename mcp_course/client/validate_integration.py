@@ -13,12 +13,13 @@ import asyncio
 import logging
 from pathlib import Path
 import tempfile
+import time
 from typing import Any
 
 from mcp_course.client.basic import BasicMCPClient, ClientConfig
 from mcp_course.client.conversation import ConversationManager
 from mcp_course.client.integration import MCPToolDefinition, OllamaMCPBridge
-from mcp_course.client.prompts import PromptEngineering, PromptStrategy
+from mcp_course.client.prompts import PromptEngineering
 from mcp_course.ollama_client.client import OllamaClient
 from mcp_course.ollama_client.config import OllamaConfig
 
@@ -30,14 +31,14 @@ class IntegrationValidator:
         """Initialize the validator."""
         self.logger = logging.getLogger("IntegrationValidator")
         self.test_results: dict[str, dict[str, Any]] = {}
-        
+
         # Test configuration
         self.ollama_config = OllamaConfig(
             model_name="llama3.2:3b",
             endpoint="http://localhost:11434",
             parameters={"temperature": 0.1, "max_tokens": 500}
         )
-        
+
         self.client_config = ClientConfig(
             name="integration-validator",
             timeout=10.0,
@@ -68,10 +69,10 @@ class IntegrationValidator:
                 self.logger.info(f"Running {category_name} validation...")
                 result = await test_method()
                 self.test_results[category_name] = result
-                
+
                 status = "PASS" if result.get("success", False) else "FAIL"
                 self.logger.info(f"{category_name}: {status}")
-                
+
             except Exception as e:
                 self.logger.error(f"Error in {category_name} validation: {e}")
                 self.test_results[category_name] = {
@@ -82,14 +83,14 @@ class IntegrationValidator:
 
         # Generate summary
         self.test_results["summary"] = self._generate_summary()
-        
+
         self.logger.info("Integration validation completed")
         return self.test_results
 
     async def validate_bridge_functionality(self) -> dict[str, Any]:
         """Validate Ollama-MCP bridge functionality."""
         tests = []
-        
+
         try:
             # Create bridge components
             mcp_client = BasicMCPClient(self.client_config)
@@ -141,7 +142,7 @@ class IntegrationValidator:
             })
 
             success = all(test["success"] for test in tests)
-            
+
         except Exception as e:
             tests.append({
                 "name": "Bridge functionality validation",
@@ -159,7 +160,7 @@ class IntegrationValidator:
     async def validate_prompt_engineering(self) -> dict[str, Any]:
         """Validate prompt engineering utilities."""
         tests = []
-        
+
         try:
             prompt_eng = PromptEngineering()
             example_tools = self._create_example_tools()
@@ -174,7 +175,7 @@ class IntegrationValidator:
 
             # Test 2: Prompt generation with different templates
             user_message = "Calculate the area of a circle and send the result via email"
-            
+
             for template_info in templates[:3]:  # Test first 3 templates
                 template_name = template_info["name"]
                 prompt = prompt_eng.generate_prompt(
@@ -182,7 +183,7 @@ class IntegrationValidator:
                     user_message=user_message,
                     tools=example_tools
                 )
-                
+
                 tests.append({
                     "name": f"Prompt generation ({template_name})",
                     "success": len(prompt) > len(user_message),
@@ -224,7 +225,7 @@ class IntegrationValidator:
             })
 
             success = all(test["success"] for test in tests)
-            
+
         except Exception as e:
             tests.append({
                 "name": "Prompt engineering validation",
@@ -242,12 +243,12 @@ class IntegrationValidator:
     async def validate_conversation_management(self) -> dict[str, Any]:
         """Validate conversation management functionality."""
         tests = []
-        
+
         try:
             # Create temporary storage for testing
             with tempfile.TemporaryDirectory() as temp_dir:
                 storage_path = Path(temp_dir) / "conversations"
-                
+
                 # Create components
                 mcp_client = BasicMCPClient(self.client_config)
                 ollama_client = OllamaClient(self.ollama_config)
@@ -322,7 +323,7 @@ class IntegrationValidator:
                 })
 
             success = all(test["success"] for test in tests)
-            
+
         except Exception as e:
             tests.append({
                 "name": "Conversation management validation",
@@ -340,13 +341,13 @@ class IntegrationValidator:
     async def validate_tool_integration(self) -> dict[str, Any]:
         """Validate MCP tool integration functionality."""
         tests = []
-        
+
         try:
             # Create bridge with example tools
             mcp_client = BasicMCPClient(self.client_config)
             ollama_client = OllamaClient(self.ollama_config)
             bridge = OllamaMCPBridge(mcp_client, ollama_client)
-            
+
             example_tools = self._create_example_tools()
             for tool in example_tools:
                 tool_key = f"{tool.server_name}.{tool.name}"
@@ -366,7 +367,7 @@ class IntegrationValidator:
                 {"name": "calculator", "arguments": {"expression": "2 + 2"}},
                 {"name": "weather_lookup", "arguments": {"location": "London"}}
             ]
-            
+
             # Note: We can't actually execute tools without real MCP servers,
             # but we can test the preparation logic
             tests.append({
@@ -393,7 +394,7 @@ class IntegrationValidator:
             })
 
             success = all(test["success"] for test in tests)
-            
+
         except Exception as e:
             tests.append({
                 "name": "Tool integration validation",
@@ -411,7 +412,7 @@ class IntegrationValidator:
     async def validate_error_handling(self) -> dict[str, Any]:
         """Validate error handling and recovery."""
         tests = []
-        
+
         try:
             # Test 1: Invalid Ollama configuration
             try:
@@ -419,7 +420,7 @@ class IntegrationValidator:
                     model_name="nonexistent-model",
                     endpoint="http://invalid:9999"
                 )
-                invalid_client = OllamaClient(invalid_config)
+                OllamaClient(invalid_config)
                 # This should not raise an exception during initialization
                 tests.append({
                     "name": "Invalid Ollama config handling",
@@ -444,10 +445,10 @@ class IntegrationValidator:
             mcp_client = BasicMCPClient(self.client_config)
             ollama_client = OllamaClient(self.ollama_config)
             bridge = OllamaMCPBridge(mcp_client, ollama_client)
-            
+
             with tempfile.TemporaryDirectory() as temp_dir:
                 conv_manager = ConversationManager(bridge, Path(temp_dir))
-                
+
                 missing_conv = conv_manager.load_conversation("nonexistent-id")
                 tests.append({
                     "name": "Missing conversation handling",
@@ -486,7 +487,7 @@ class IntegrationValidator:
             })
 
             success = all(test["success"] for test in tests)
-            
+
         except Exception as e:
             tests.append({
                 "name": "Error handling validation",
@@ -504,17 +505,17 @@ class IntegrationValidator:
     async def validate_performance(self) -> dict[str, Any]:
         """Validate performance characteristics."""
         tests = []
-        
+
         try:
-            import time
-            
+
+
             # Test 1: Bridge initialization performance
             start_time = time.time()
             mcp_client = BasicMCPClient(self.client_config)
             ollama_client = OllamaClient(self.ollama_config)
             bridge = OllamaMCPBridge(mcp_client, ollama_client)
             init_time = time.time() - start_time
-            
+
             tests.append({
                 "name": "Bridge initialization performance",
                 "success": init_time < 1.0,
@@ -528,7 +529,7 @@ class IntegrationValidator:
                 tool_key = f"{tool.server_name}.{tool.name}"
                 bridge.available_tools[tool_key] = tool
             discovery_time = time.time() - start_time
-            
+
             tests.append({
                 "name": "Tool discovery performance",
                 "success": discovery_time < 0.1,
@@ -538,16 +539,16 @@ class IntegrationValidator:
             # Test 3: Prompt generation performance
             prompt_eng = PromptEngineering()
             start_time = time.time()
-            
+
             for _ in range(10):  # Generate 10 prompts
                 prompt_eng.generate_prompt(
                     "conversational",
                     "Test message",
                     example_tools
                 )
-            
+
             prompt_time = (time.time() - start_time) / 10
-            
+
             tests.append({
                 "name": "Prompt generation performance",
                 "success": prompt_time < 0.1,
@@ -557,16 +558,16 @@ class IntegrationValidator:
             # Test 4: Conversation management performance
             with tempfile.TemporaryDirectory() as temp_dir:
                 conv_manager = ConversationManager(bridge, Path(temp_dir))
-                
+
                 start_time = time.time()
                 conv_ids = []
-                
+
                 for i in range(5):  # Create 5 conversations
                     conv_id = conv_manager.create_conversation(f"Test {i}")
                     conv_ids.append(conv_id)
-                
+
                 creation_time = (time.time() - start_time) / 5
-                
+
                 tests.append({
                     "name": "Conversation creation performance",
                     "success": creation_time < 0.1,
@@ -578,7 +579,7 @@ class IntegrationValidator:
                     conv_manager.delete_conversation(conv_id)
 
             success = all(test["success"] for test in tests)
-            
+
         except Exception as e:
             tests.append({
                 "name": "Performance validation",
@@ -669,11 +670,11 @@ class IntegrationValidator:
         for category, result in self.test_results.items():
             if category == "summary":
                 continue
-                
+
             category_tests = result.get("tests", [])
             total_tests += len(category_tests)
             passed_tests += sum(1 for test in category_tests if test.get("success", False))
-            
+
             if not result.get("success", False):
                 failed_categories.append(category)
 
@@ -694,8 +695,8 @@ class IntegrationValidator:
         print("=" * 60)
 
         summary = self.test_results.get("summary", {})
-        
-        print(f"\nOVERALL RESULTS:")
+
+        print("\nOVERALL RESULTS:")
         print(f"  Categories: {summary.get('passed_categories', 0)}/{summary.get('total_categories', 0)} passed")
         print(f"  Tests: {summary.get('passed_tests', 0)}/{summary.get('total_tests', 0)} passed")
         print(f"  Success Rate: {summary.get('success_rate', 0):.1%}")
@@ -710,10 +711,10 @@ class IntegrationValidator:
         for category, result in self.test_results.items():
             if category == "summary":
                 continue
-                
+
             status = "PASS" if result.get("success", False) else "FAIL"
             print(f"\n{result.get('category', category)}: {status}")
-            
+
             for test in result.get("tests", []):
                 test_status = "✓" if test.get("success", False) else "✗"
                 print(f"  {test_status} {test.get('name', 'Unknown test')}")
@@ -733,15 +734,15 @@ async def main():
 
     # Create and run validator
     validator = IntegrationValidator()
-    
+
     try:
         results = await validator.run_all_validations()
         validator.print_results()
-        
+
         # Return appropriate exit code
         summary = results.get("summary", {})
         return 0 if summary.get("overall_success", False) else 1
-        
+
     except KeyboardInterrupt:
         print("\nValidation interrupted by user")
         return 1
